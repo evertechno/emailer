@@ -1,4 +1,4 @@
 streamlit 
 pandas 
 google-generativeai  
-email-validator
+email_validator
