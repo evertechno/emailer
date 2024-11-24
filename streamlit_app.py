@@ -23,6 +23,7 @@ if uploaded_file is not None:
         # Extract customer information
         customer_name = row['customer_name']
         customer_email = row['customer_email']
+        customer_company = row['customer_company']  # Add this line
         customer_needs = row['customer_needs']
 
         # Generate personalized prompt for Gemini AI
@@ -47,6 +48,6 @@ if uploaded_file is not None:
         with smtplib.SMTP('smtp.gmail.com', 587) as smtp:
             smtp.starttls()
             smtp.login(sender_email, sender_password)
-            smtp.sendmail(sender_email, 1 , customer_email, message.as_string())
+            smtp.sendmail(sender_email, 1  customer_email, message.as_string())
 
         st.write(f"Email sent to {customer_name} at {customer_email}")
