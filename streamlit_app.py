@@ -55,6 +55,13 @@ def log_proposal(recipient, proposal):
 st.title("Sales Proposal Generator")
 st.write("Generate and send personalized sales proposals using Generative AI.")
 
+# Confirm that secrets are loaded
+st.write("GOOGLE_API_KEY:", st.secrets["GOOGLE_API_KEY"])
+st.write("BREVO_SMTP_SERVER:", st.secrets["BREVO_SMTP_SERVER"])
+st.write("BREVO_SMTP_PORT:", st.secrets["BREVO_SMTP_PORT"])
+st.write("BREVO_EMAIL:", st.secrets["BREVO_EMAIL"])
+st.write("BREVO_PASSWORD:", st.secrets["BREVO_PASSWORD"])
+
 # Upload CSV file
 uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
 if uploaded_file:
