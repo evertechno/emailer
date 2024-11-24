@@ -10,10 +10,12 @@ import datetime
 # Configure the API key securely from Streamlit's secrets
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
-# Function to send email
+# Function to send email through Brevo's SMTP server
 def send_email(recipient, subject, body):
-    sender_email = st.secrets["SENDER_EMAIL"]
-    sender_password = st.secrets["SENDER_PASSWORD"]
+    smtp_server = st.secrets["BREVO_SMTP_SERVER"]
+    smtp_port = st.secrets["BREVO_SMTP_PORT"]
+    sender_email = st.secrets["BREVO_EMAIL"]
+    sender_password = st.secrets["BREVO_PASSWORD"]
     
     try:
         msg = MIMEMultipart()
@@ -23,7 +25,7 @@ def send_email(recipient, subject, body):
 
         msg.attach(MIMEText(body, 'plain'))
         
-        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
             server.starttls()
             server.login(sender_email, sender_password)
             server.sendmail(sender_email, recipient, msg.as_string())
