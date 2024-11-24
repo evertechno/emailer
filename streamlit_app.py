@@ -6,9 +6,14 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email_validator import validate_email, EmailNotValidError
 import datetime
+import logging
 
 # Configure the API key securely from Streamlit's secrets
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger("email")
 
 # Function to send email through Brevo's SMTP server
 def send_email(recipient, subject, body):
@@ -24,15 +29,18 @@ def send_email(recipient, subject, body):
         msg['Subject'] = subject
 
         msg.attach(MIMEText(body, 'plain'))
-        
+
         with smtplib.SMTP(smtp_server, smtp_port) as server:
             server.starttls()
+            server.set_debuglevel(1)  # Enable debug output
             server.login(sender_email, sender_password)
             server.sendmail(sender_email, recipient, msg.as_string())
             server.quit()
-        
+
+        logger.debug(f"Email sent to {recipient}")
         return True
     except Exception as e:
+        logger.error(f"Error: {e}")
         st.error(f"Error: {e}")
         return False
 
