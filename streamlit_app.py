@@ -1,9 +1,8 @@
 import streamlit as st
 import google.generativeai as genai
 import pandas as pd
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+import sendinblue
+from sendinblue import SendinblueClient
 from email_validator import validate_email, EmailNotValidError
 import datetime
 import logging
@@ -15,30 +14,32 @@ genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("email")
 
-# Function to send email through Brevo's SMTP server
-def send_email(recipient, subject, body):
-    smtp_server = st.secrets["BREVO_SMTP_SERVER"]
-    smtp_port = st.secrets["BREVO_SMTP_PORT"]
-    sender_email = st.secrets["BREVO_EMAIL"]
-    sender_password = st.secrets["BREVO_PASSWORD"]
-    
+# Initialize Brevo API client
+api_key = st.secrets["BREVO_API_KEY"]
+client = SendinblueClient(api_key)
+
+# Function to send email using Brevo API
+def send_email_via_brevo(recipient, subject, body):
     try:
-        msg = MIMEMultipart()
-        msg['From'] = sender_email
-        msg['To'] = recipient
-        msg['Subject'] = subject
+        # Create the email payload
+        email_data = {
+            "sender": {"email": st.secrets["BREVO_EMAIL"]},
+            "to": [{"email": recipient}],
+            "subject": subject,
+            "htmlContent": body  # Sending HTML content or you can use 'textContent' for plain text
+        }
 
-        msg.attach(MIMEText(body, 'plain'))
+        # Send the email via Brevo API
+        response = client.smtp.send_transac_email(email_data)
+        
+        # Check if the email was sent successfully
+        if response["code"] == "success":
+            logger.debug(f"Email sent to {recipient}")
+            return True
+        else:
+            logger.error(f"Failed to send email to {recipient}. Error: {response['message']}")
+            return False
 
-        with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.starttls()
-            server.set_debuglevel(1)  # Enable debug output
-            server.login(sender_email, sender_password)
-            server.sendmail(sender_email, recipient, msg.as_string())
-            server.quit()
-
-        logger.debug(f"Email sent to {recipient}")
-        return True
     except Exception as e:
         logger.error(f"Error: {e}")
         st.error(f"Error: {e}")
@@ -65,10 +66,8 @@ st.write("Generate and send personalized sales proposals using Generative AI.")
 
 # Confirm that secrets are loaded
 st.write("GOOGLE_API_KEY:", st.secrets["GOOGLE_API_KEY"])
-st.write("BREVO_SMTP_SERVER:", st.secrets["BREVO_SMTP_SERVER"])
-st.write("BREVO_SMTP_PORT:", st.secrets["BREVO_SMTP_PORT"])
+st.write("BREVO_API_KEY:", st.secrets["BREVO_API_KEY"])
 st.write("BREVO_EMAIL:", st.secrets["BREVO_EMAIL"])
-st.write("BREVO_PASSWORD:", st.secrets["BREVO_PASSWORD"])
 
 # Upload CSV file
 uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
@@ -91,7 +90,7 @@ if uploaded_file:
                 st.write(f"Preview of Proposal for {recipient}:")
                 st.write(proposal)
                 
-                if send_email(recipient, subject, proposal):
+                if send_email_via_brevo(recipient, subject, proposal):
                     log_proposal(recipient, proposal)
                     st.success(f"Proposal sent to {recipient} successfully!")
                 else:
